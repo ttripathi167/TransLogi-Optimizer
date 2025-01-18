@@ -66,6 +66,11 @@ def optimize_allocation():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/', methods=['GET'])
+def home():
+    return "🚀 API is running on http://localhost:5000!"
+
+
 if __name__ == "__main__":
     with app.app_context():
         if not os.path.exists("logistics_system.db"):
