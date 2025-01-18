@@ -1,5 +1,4 @@
-# Fully Functional Python Code for the use the create the dashbaorad 
-
+# translogi_system.py
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
@@ -8,17 +7,14 @@ import pickle
 import numpy as np
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
 from sklearn.linear_model import LinearRegression
 import networkx as nx
 from pulp import LpProblem, LpVariable, LpMinimize
 import threading
 import requests
-import datetime
-import docker
 
 # Flask Setup
-app = Flask(_name_)
+app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///logistics_system.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -40,59 +36,31 @@ class Order(db.Model):
     delivery_time = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(64), nullable=False, default='pending')
 
-# API Keys
+# API Keys (You should replace these with actual keys)
 TRAFFIC_API_KEY = 'your_traffic_api_key'
 WEATHER_API_KEY = 'your_weather_api_key'
 
 # Helper Functions for Data Collection
-import requests
-
 def fetch_traffic_data(location):
     try:
-        # Replace with the actual traffic API URL
         url = f'https://maps.googleapis.com/maps/api/traffic_data?location={location}&key={TRAFFIC_API_KEY}'
         response = requests.get(url)
-        
-        # Check if the response status code is 200 (OK)
         response.raise_for_status()
-        
-        # Check if the response content is empty
-        if not response.text:
-            print(f"Error: Empty response for location {location}")
-            return 0  # Return a default value
-        
-        # Try to parse the JSON response
         data = response.json()
-        
-        # Check if the expected 'traffic_level' field is in the response
-        if 'traffic_level' in data:
-            return data['traffic_level']
-        else:
-            print(f"Error: 'traffic_level' not found in response for location {location}")
-            return 0  # Return a default value if 'traffic_level' is missing
-            
-    except requests.exceptions.HTTPError as http_err:
-        # Handle HTTP errors (e.g., 404, 500)
-        print(f"HTTP error occurred: {http_err}")
-    except requests.exceptions.RequestException as req_err:
-        # Handle general request errors (e.g., network issues)
-        print(f"Request error occurred: {req_err}")
-    except ValueError as json_err:
-        # Handle JSON parsing errors
-        print(f"JSON error occurred: {json_err}")
+        return data.get('traffic_level', 0)
     except Exception as e:
-        # Catch any other exceptions
-        print(f"An unexpected error occurred: {e}")
-    
-    # Return a default value in case of any error
-    return 0
+        print(f"Error fetching traffic data: {e}")
+        return 0
 
 def fetch_weather_data(location):
-    response = requests.get(f'https://api.openweathermap.org/data/2.5/weather?q={location}&appid={WEATHER_API_KEY}')
-    if response.status_code == 200:
+    try:
+        url = f'https://api.openweathermap.org/data/2.5/weather?q={location}&appid={WEATHER_API_KEY}'
+        response = requests.get(url)
+        response.raise_for_status()
         weather = response.json()
-        return weather['main']['humidity']
-    else:
+        return weather['main'].get('humidity', 0)
+    except Exception as e:
+        print(f"Error fetching weather data: {e}")
         return 0
 
 # Machine Learning Model
@@ -170,7 +138,6 @@ def start_flask():
 
 # Streamlit Setup
 st.set_page_config(page_title="Logistics Dashboard", layout="wide")
-
 st.title("Logistics Dashboard")
 st.write("""
 Welcome to the Logistics Dashboard! Visualize delivery locations, predict delivery times, and optimize logistics routes.
@@ -189,33 +156,4 @@ with st.form("order_form"):
     order_id = st.text_input("Order ID", placeholder="Enter Order ID")
     customer_location = st.text_input("Customer Location", placeholder="Enter Customer Location")
     distance = st.number_input("Distance (km)", min_value=0.0, step=0.1)
-    priority = st.slider("Order Priority", 1, 25)
-    
-    # Add the submit button inside the form
-    submit_button = st.form_submit_button(label="Submit Order")
-
-    # Ensure the button's action is wrapped properly
-    if submit_button:
-        if order_id and customer_location:
-            traffic = fetch_traffic_data(customer_location)
-            weather = fetch_weather_data(customer_location)
-            
-            st.success("Order submitted successfully!")
-            model = load_model()
-            predicted_time = predict_delivery_time(model, {
-                'distance': distance,
-                'order_priority': priority,
-                'traffic_level': traffic,
-                'weather_conditions': weather
-            })
-            st.write(f"Predicted Delivery Time: {predicted_time:.2f} hours")
-        else:
-            st.error("Please fill in all the fields before submitting.")
-
-# Run Flask in a Thread
-if __name__ == "__main__":
-    threading.Thread(target=start_flask).start()
-
-# Run the code On the VS Code Terminal Use the following Command to execute the whole code
-1) pip install --upgrade flask-sqlalchemy Flask Werkzeug scikit-learn streamlit folium streamlit-folium networkx pulp psycopg2-binary requests
-2) streamlit run translogi_system.py
+   
