@@ -178,3 +178,16 @@ if __name__ == "__main__":
     flask_thread = threading.Thread(target=start_flask)
     flask_thread.start()
     os.system("streamlit run dashboard.py")
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Hello, World!"
+
+if __name__ == '__main__':
+    app.run(debug=True)
