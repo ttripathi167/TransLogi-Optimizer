@@ -67,11 +67,12 @@ def optimize_allocation():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    with app.app_context():
-        if not os.path.exists("logistics_system.db"):
+    # Ensure the database exists
+    if not os.path.exists("logistics_system.db"):
+        with app.app_context():
             db.create_all()
-            print("✅ Database initialized!")
-        else:
-            print("✅ Database already exists!")
+        print("✅ Database initialized!")
+    else:
+        print("✅ Database already exists!")
 
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="127.0.0.1", port=5000)
