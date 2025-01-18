@@ -89,7 +89,7 @@ The application helps users manage logistics, including:
   
 # Accessing the Application
 - API Endpoint: http://localhost:5000
-- Dashboard: http://localhost:8501
+- Dashboard: http://localhost:8501 
   
 # Tips for Best Use
 - Regularly update order and route information to get accurate predictions and optimizations.
