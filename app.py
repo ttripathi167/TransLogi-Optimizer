@@ -1,15 +1,26 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from predictive_model import load_model, predict_delivery_time
-from route_optimization import optimize_route, vehicle_routing
-from data_scraping import fetch_traffic_data, fetch_weather_data
+import os
 
+# Import custom modules (Ensure these exist)
+try:
+    from predictive_model import load_model, predict_delivery_time
+    from route_optimization import optimize_route, vehicle_routing
+    from data_scraping import fetch_traffic_data, fetch_weather_data
+except ImportError:
+    print("⚠️ Missing module(s): Ensure predictive_model, route_optimization, and data_scraping exist!")
+
+# Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret_key'
+
+# Configure database
+app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///logistics_system.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
+# Define Order model
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_location = db.Column(db.String(128), nullable=False)
@@ -20,25 +31,47 @@ class Order(db.Model):
     delivery_time = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(64), nullable=False, default='pending')
 
+# Routes
+@app.route('/', methods=['GET'])
+def home():
+    return "🚀 API is running on http://localhost:5000!"
+
 @app.route('/predict_delivery_time', methods=['POST'])
 def predict():
     data = request.json
-    model = load_model()
-    delivery_time = predict_delivery_time(model, data)
-    return jsonify({"predicted_delivery_time": delivery_time})
+    try:
+        model = load_model()
+        delivery_time = predict_delivery_time(model, data)
+        return jsonify({"predicted_delivery_time": delivery_time})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/optimize_route', methods=['POST'])
 def optimize():
     locations = request.json.get('locations', [])
-    path, distance = optimize_route(locations)
-    return jsonify({"path": path, "distance": distance})
+    if not locations:
+        return jsonify({"error": "Missing locations parameter"}), 400
+
+    try:
+        path, distance = optimize_route(locations)
+        return jsonify({"path": path, "distance": distance})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/optimize_allocation', methods=['POST'])
 def optimize_allocation():
-    results = vehicle_routing()
-    return jsonify({"solution": results})
+    try:
+        results = vehicle_routing()
+        return jsonify({"solution": results})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+        if not os.path.exists("logistics_system.db"):
+            db.create_all()
+            print("✅ Database initialized!")
+        else:
+            print("✅ Database already exists!")
+
+    app.run(debug=True, host="0.0.0.0", port=5000)
