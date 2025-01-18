@@ -31,10 +31,10 @@ class Order(db.Model):
     delivery_time = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(64), nullable=False, default='pending')
 
-# Routes
+# 🚀 ADD ROOT ENDPOINT TO FIX 404 ERROR
 @app.route('/', methods=['GET'])
 def home():
-    return "🚀 API is running on http://localhost:5000!"
+    return "🚀 API is running on http://127.0.0.1:5000!"
 
 @app.route('/predict_delivery_time', methods=['POST'])
 def predict():
@@ -65,11 +65,6 @@ def optimize_allocation():
         return jsonify({"solution": results})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-@app.route('/', methods=['GET'])
-def home():
-    return "🚀 API is running on http://localhost:5000!"
-
 
 if __name__ == "__main__":
     with app.app_context():
