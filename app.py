@@ -1,14 +1,11 @@
+# app.py
+
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
-
-# Import custom modules (Ensure these exist)
-try:
-    from predictive_model import load_model, predict_delivery_time
-    from route_optimization import optimize_route, vehicle_routing
-    from data_scraping import fetch_traffic_data, fetch_weather_data
-except ImportError:
-    print("⚠️ Missing module(s): Ensure predictive_model, route_optimization, and data_scraping exist!")
+from predictive_model import load_model, predict_delivery_time
+from route_optimization import optimize_route, vehicle_routing
+from data_scraping import fetch_traffic_data, fetch_weather_data
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -31,7 +28,7 @@ class Order(db.Model):
     delivery_time = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(64), nullable=False, default='pending')
 
-# 🚀 ADD ROOT ENDPOINT TO FIX 404 ERROR
+# 🚀 Add root endpoint
 @app.route('/', methods=['GET'])
 def home():
     return "🚀 API is running on http://127.0.0.1:5000!"
