@@ -156,4 +156,25 @@ with st.form("order_form"):
     order_id = st.text_input("Order ID", placeholder="Enter Order ID")
     customer_location = st.text_input("Customer Location", placeholder="Enter Customer Location")
     distance = st.number_input("Distance (km)", min_value=0.0, step=0.1)
-   
+    order_priority = st.slider("Order Priority", 1, 5, 3)
+    traffic_level = st.slider("Traffic Level", 1, 5, 3)
+    weather_conditions = st.slider("Weather Conditions (Humidity)", 0, 100, 50)
+    submit_button = st.form_submit_button("Submit Order")
+
+    if submit_button:
+        order = Order(
+            customer_location=customer_location,
+            distance=distance,
+            order_priority=order_priority,
+            traffic_level=traffic_level,
+            weather_conditions=weather_conditions
+        )
+        db.session.add(order)
+        db.session.commit()
+        st.success(f"Order {order_id} submitted successfully!")
+
+# Run Flask and Streamlit Together
+if __name__ == "__main__":
+    flask_thread = threading.Thread(target=start_flask)
+    flask_thread.start()
+    os.system("streamlit run dashboard.py")
