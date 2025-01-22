@@ -88,7 +88,7 @@ The application helps users manage logistics, including:
 - Use visualizations like maps, bar charts, and trend lines to understand the data and make informed decisions.
   
 # Accessing the Application
-- API Endpoint: http://localhost:5000
+- API Endpoint:http://127.0.0.1:5000/
 - Dashboard: http://localhost:8501 
   
 # Tips for Best Use

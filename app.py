@@ -1,32 +1,28 @@
-# app.py
-
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import os
 from predictive_model import load_model, predict_delivery_time
-from route_optimization import optimize_route, vehicle_routing
+from services.route_optimization import optimize_route, vehicle_routing  # Correct import
 from data_scraping import fetch_traffic_data, fetch_weather_data
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Configure database
+# Configure database (ensure correct URI is provided)
 app.config['SECRET_KEY'] = 'your_secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///logistics_system.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Trisha@localhost:5433/TransLogi_DB'  # Change to your actual DB URI
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Initialize SQLAlchemy
 db = SQLAlchemy(app)
 
 # Define Order model
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    customer_location = db.Column(db.String(128), nullable=False)
-    distance = db.Column(db.Float, nullable=False)
-    order_priority = db.Column(db.Integer, nullable=False)
-    traffic_level = db.Column(db.Float, nullable=False)
-    weather_conditions = db.Column(db.Float, nullable=False)
-    delivery_time = db.Column(db.Float, nullable=True)
-    status = db.Column(db.String(64), nullable=False, default='pending')
+    user_id = db.Column(db.Integer, nullable=False)
+    product_name = db.Column(db.String(255), nullable=False)
+    order_date = db.Column(db.Date, nullable=False)
+    amount = db.Column(db.Numeric(10, 2), nullable=False)
 
 # 🚀 Add root endpoint
 @app.route('/', methods=['GET'])
@@ -64,12 +60,11 @@ def optimize_allocation():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Ensure the database exists
-    if not os.path.exists("logistics_system.db"):
-        with app.app_context():
-            db.create_all()
+    # Ensure the database exists and is created within the app context
+    with app.app_context():
+        # Ensure the database is created
+        db.create_all()
         print("✅ Database initialized!")
-    else:
-        print("✅ Database already exists!")
 
+    # Run the Flask app
     app.run(debug=True, host="127.0.0.1", port=5000)

@@ -1,31 +1,134 @@
-# translogi_system.py
-import streamlit as st
-import folium
-from streamlit_folium import st_folium
-import os
-import pickle
-import numpy as np
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sklearn.linear_model import LinearRegression
-import networkx as nx
-from pulp import LpProblem, LpVariable, LpMinimize
-import threading
-import requests
+import json
 
-# Flask Setup
+# Initialize Flask app and SQLAlchemy
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///logistics_system.db'
+
+# Configure database (PostgreSQL)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Trisha@localhost:5433/TransLogi_DB'  # Update credentials here
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize the database
 db = SQLAlchemy(app)
 
-# Database Models
-class User(db.Model):
+# Define the models (table structures)
+class Route(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
+    source = db.Column(db.String(50), nullable=False)
+    destination = db.Column(db.String(50), nullable=False)
+    distance = db.Column(db.Float, nullable=False)
+    optimized_route = db.Column(db.JSON, nullable=True)  # Stores the optimized route as JSON
 
+class UserInput(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    input_data = db.Column(db.JSON, nullable=False)  # Stores dashboard inputs as JSON
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())  # Auto-generates timestamp
+
+# Create the database tables
+with app.app_context():
+    db.create_all()
+
+# API endpoint to retrieve all routes
+@app.route('/api/routes', methods=['GET'])
+def get_routes():
+    routes = Route.query.all()  # Query all routes from the database
+    return jsonify([{
+        'id': route.id,
+        'source': route.source,
+        'destination': route.destination,
+        'distance': route.distance,
+        'optimized_route': route.optimized_route
+    } for route in routes])  # Return routes in JSON format
+
+# API endpoint to add a new route
+@app.route('/api/routes', methods=['POST'])
+def add_route():
+    data = request.json
+    try:
+        # Create a new Route entry
+        new_route = Route(
+            source=data['source'],
+            destination=data['destination'],
+            distance=data['distance'],
+            optimized_route=data.get('optimized_route')
+        )
+        db.session.add(new_route)
+        db.session.commit()
+        return jsonify({'message': 'Route added successfully!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API endpoint to retrieve user inputs
+@app.route('/api/user_inputs', methods=['GET'])
+def get_user_inputs():
+    inputs = UserInput.query.all()  # Query all user inputs from the database
+    return jsonify([{
+        'id': user_input.id,
+        'input_data': user_input.input_data,
+        'timestamp': user_input.timestamp
+    } for user_input in inputs])  # Return inputs in JSON format
+
+# API endpoint to add user inputs from the dashboard
+@app.route('/api/user_inputs', methods=['POST'])
+def add_user_input():
+    data = request.json
+    try:
+        # Create a new UserInput entry
+        new_input = UserInput(input_data=data)
+        db.session.add(new_input)
+        db.session.commit()
+        return jsonify({'message': 'User input added successfully!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Example integrated logic: retrieve optimized routes and user inputs together
+@app.route('/api/overview', methods=['GET'])
+def get_overview():
+    try:
+        # Fetch routes and user inputs
+        routes = Route.query.all()
+        user_inputs = UserInput.query.all()
+
+        # Combine data into a single response
+        data = {
+            'routes': [{
+                'id': route.id,
+                'source': route.source,
+                'destination': route.destination,
+                'distance': route.distance,
+                'optimized_route': route.optimized_route
+            } for route in routes],
+            'user_inputs': [{
+                'id': user_input.id,
+                'input_data': user_input.input_data,
+                'timestamp': user_input.timestamp
+            } for user_input in user_inputs]
+        }
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Script to add sample data to the database
+@app.route('/api/seed_data', methods=['POST'])
+def seed_data():
+    try:
+        routes = [
+            Route(source="New York", destination="Los Angeles", distance=2800, optimized_route={"route": "NY -> LA"}),
+            Route(source="Chicago", destination="Houston", distance=1080, optimized_route={"route": "CHI -> HOU"})
+        ]
+        db.session.bulk_save_objects(routes)
+        db.session.commit()
+        return jsonify({'message': 'Sample data added successfully!'}), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Run the Flask app
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+# Define Order model
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     customer_location = db.Column(db.String(128), nullable=False)
@@ -36,158 +139,10 @@ class Order(db.Model):
     delivery_time = db.Column(db.Float, nullable=True)
     status = db.Column(db.String(64), nullable=False, default='pending')
 
-# API Keys (You should replace these with actual keys)
-TRAFFIC_API_KEY = 'your_traffic_api_key'
-WEATHER_API_KEY = 'your_weather_api_key'
-
-# Helper Functions for Data Collection
-def fetch_traffic_data(location):
-    try:
-        url = f'https://maps.googleapis.com/maps/api/traffic_data?location={location}&key={TRAFFIC_API_KEY}'
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        return data.get('traffic_level', 0)
-    except Exception as e:
-        print(f"Error fetching traffic data: {e}")
-        return 0
-
-def fetch_weather_data(location):
-    try:
-        url = f'https://api.openweathermap.org/data/2.5/weather?q={location}&appid={WEATHER_API_KEY}'
-        response = requests.get(url)
-        response.raise_for_status()
-        weather = response.json()
-        return weather['main'].get('humidity', 0)
-    except Exception as e:
-        print(f"Error fetching weather data: {e}")
-        return 0
-
-# Machine Learning Model
-MODEL_PATH = 'logistics_model.pkl'
-
-def load_model():
-    if os.path.exists(MODEL_PATH):
-        with open(MODEL_PATH, 'rb') as file:
-            return pickle.load(file)
-    else:
-        return train_model()
-
-def train_model():
-    X = np.random.rand(100, 4)
-    y = X[:, 0] * 2 + X[:, 1] * 3 + X[:, 2] * 1.5 + X[:, 3] * 0.5
-    model = LinearRegression().fit(X, y)
-    with open(MODEL_PATH, 'wb') as file:
-        pickle.dump(model, file)
-    return model
-
-def predict_delivery_time(model, data):
-    features = np.array([data['distance'], data['order_priority'], data['traffic_level'], data['weather_conditions']]).reshape(1, -1)
-    return model.predict(features)[0]
-
-# Route Optimization
-def optimize_route(locations):
-    G = nx.Graph()
-    for loc in locations:
-        G.add_edge(loc[0], loc[1], weight=loc[2])
-    source, destination = locations[0][0], locations[-1][1]
-    path = nx.shortest_path(G, source=source, target=destination, weight='weight')
-    distance = nx.shortest_path_length(G, source=source, target=destination, weight='weight')
-    return path, distance
-
-def vehicle_routing():
-    problem = LpProblem("VehicleRouting", LpMinimize)
-    x1 = LpVariable("Route1", 0, 1, cat="Binary")
-    x2 = LpVariable("Route2", 0, 1, cat="Binary")
-    problem += 10 * x1 + 15 * x2, "Minimize Costs"
-    problem += x1 + x2 == 1, "One route must be selected"
-    problem.solve()
-    return {var.name: var.varValue for var in problem.variables()}
-
-# Flask Routes
-@app.route('/predict_delivery_time', methods=['POST'])
-def predict():
-    data = request.json
-    if not all(key in data for key in ['distance', 'order_priority', 'traffic_level', 'weather_conditions']):
-        return jsonify({"message": "Invalid input!"}), 400
-
-    model = load_model()
-    delivery_time = predict_delivery_time(model, data)
-    return jsonify({"predicted_delivery_time": delivery_time})
-
-@app.route('/optimize_route', methods=['POST'])
-def optimize():
-    data = request.json
-    if 'locations' not in data:
-        return jsonify({"message": "Invalid input!"}), 400
-
-    locations = data['locations']
-    path, distance = optimize_route(locations)
-    return jsonify({"path": path, "distance": distance})
-
-@app.route('/optimize_allocation', methods=['POST'])
-def optimize_allocation():
-    results = vehicle_routing()
-    return jsonify({"solution": results})
-
-# Start Flask App in a Separate Thread
-def start_flask():
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, use_reloader=False)
-
-# Streamlit Setup
-st.set_page_config(page_title="Logistics Dashboard", layout="wide")
-st.title("Logistics Dashboard")
-st.write("""
-Welcome to the Logistics Dashboard! Visualize delivery locations, predict delivery times, and optimize logistics routes.
-""")
-
-# Map Section
-st.header("Delivery Map")
-start_coords = (37.7749, -122.4194)
-map_object = folium.Map(location=start_coords, zoom_start=13)
-folium.Marker(location=start_coords, popup="Start Location").add_to(map_object)
-st_folium(map_object, width=700, height=500)
-
-# Order Submission Form
-st.header("Submit a New Order")
-with st.form("order_form"):
-    order_id = st.text_input("Order ID", placeholder="Enter Order ID")
-    customer_location = st.text_input("Customer Location", placeholder="Enter Customer Location")
-    distance = st.number_input("Distance (km)", min_value=0.0, step=0.1)
-    order_priority = st.slider("Order Priority", 1, 5, 3)
-    traffic_level = st.slider("Traffic Level", 1, 5, 3)
-    weather_conditions = st.slider("Weather Conditions (Humidity)", 0, 100, 50)
-    submit_button = st.form_submit_button("Submit Order")
-
-    if submit_button:
-        order = Order(
-            customer_location=customer_location,
-            distance=distance,
-            order_priority=order_priority,
-            traffic_level=traffic_level,
-            weather_conditions=weather_conditions
-        )
-        db.session.add(order)
-        db.session.commit()
-        st.success(f"Order {order_id} submitted successfully!")
-
-# Run Flask and Streamlit Together
-if __name__ == "__main__":
-    flask_thread = threading.Thread(target=start_flask)
-    flask_thread.start()
-    os.system("streamlit run dashboard.py")
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
-from flask import Flask
-app = Flask(__name__)
-
-@app.route('/')
+# Root endpoint
+@app.route('/', methods=['GET'])
 def home():
-    return "Hello, World!"
+    return "🚀 API is running on http://127.0.0.1:5000!"
 
 if __name__ == '__main__':
     app.run(debug=True)
