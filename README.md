@@ -1,17 +1,60 @@
-# Translogi-logistics-optimizer
+This project won the first prize of [Napier University Group Project Awards](https://www.napier.ac.uk/about-us/our-schools/school-of-computing/student-stories/computershare-awards-2020).
 
-# Problem Statement
-TransLogi, a growing logistics company, faces challenges in optimizing delivery operations due to dynamic constraints such as fluctuating traffic conditions, unpredictable weather, and varying order volumes. These inefficiencies lead to increased delivery times, higher operational costs, and reduced customer satisfaction. To address these issues, TransLogi requires a scalable, end-to-end logistics optimization and analytics system capable of:
+# Transportation Management System
 
-- Real-Time Prediction: Accurately estimating delivery times for new orders using predictive analytics, enabling better customer communication and operational planning.
-Dynamic Route Optimization: Generating optimal routes for multiple delivery vehicles by considering factors like real-time traffic data, weather conditions, and specific order constraints (e.g., priority, perishability).
-- Operational Monitoring: Providing a user-friendly dashboard with:
-- Real-time operational metrics (e.g., average delivery time, number of pending deliveries).
-- Map-based visualizations showing vehicle locations and delivery routes.
-- Deployment and Scalability: Ensuring seamless deployment as a containerized application accessible via a web-based UI, enabling scalability and ease of integration with other business systems.
+This project is a full-suite for a delivery company. It includes:
 
-**Measurable KPIs**
-- Delivery Time Reduction: Achieve a 15-20% reduction in average delivery times.
-- Fuel Cost Savings: Decrease fuel costs by optimizing routes, targeting a 10-15% reduction.
-- Improved On-Time Delivery Rate: Enhance the on-time delivery rate by at least 20%.
-- Customer Satisfaction: Improve customer satisfaction scores (CSAT) by 15%.
+ - Customers website: general information about the company and parcel tracking option
+ - Admin Panel: allows an admin user to manage the entire database in a user-firendly environment and also provide business oriented applications (revenue and spendings overview, jobs and drivers assignments and management...)
+ - Drivers App: android application that allows drivers to see the jobs and vehicle assigned to them, mark jobs as completed, request for a customer signature, upload receipts and parcel pictures to the server, etc.
+ - API: the pivotal element that connects and makes the three above services work
+
+### 0. Web Server
+
+The web server uses *Python FLASK*. The API, Admin Panel and Customer's Website are therefore flask applications.  
+The whole setup uses Blueprints to separate the three areas. A main app is initiated, and sub-apps (api, admin panel and customer websites) are inititated within the main App.  
+*Python* is used as server-side language.
+
+[See App.py setup and blueprints registration here](https://github.com/musevarg/Transportation-Management-System/blob/master/API-and-Admin-Panel/App/App/App.py).
+
+### 1. API
+
+The API is written in *Python* and *SQL*.
+
+The API is used to fetch, update and remove content from the database. It returns JSON responses and handles GET, POST, PUT and DELETE methods.
+
+[See API code here](https://github.com/musevarg/Transportation-Management-System/blob/master/API-and-Admin-Panel/App/App/API/RestAPI.py).
+
+Below is a sample output for each request method:
+![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic1.png)
+
+### 2. Admin Panel
+
+The admin panel allows an admin user to update the MySQL database. The admin can add, remove and amend records.
+
+It is developed using *HTML*, *CSS*, *JavaScript* and *jQuery* to perform API calls. It makes extensive use of bootstrap and the above API.
+
+It also contains a dashboard screen that allows for the admin to check the monthly revenue and the monthly fees (fuel, lunch, MOT).
+
+[See Admin Panel code here](https://github.com/musevarg/Transportation-Management-System/tree/master/API-and-Admin-Panel/App/App/AdminPanel).
+
+![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic2.png)
+
+### 3. Android Application
+
+The API allows for users authentication and also provides content to the native application.
+It allows for delivery drivers to log in and see what vehicle has been assigned to them, how many jobs have been assigned to them and allows them to mark a job as completed. This updates the status of the job in the database and uploads a picture of the parcel and the customer's signature.
+It also permits for uploading receipts. This content can be retrieved in the admin panel.
+
+[See Android App code here](https://github.com/musevarg/Transportation-Management-System/tree/master/Drivers-Android-App/app/src/main).
+
+![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic3.png)
+
+### 4. Customers Website
+
+This simple website gives information about the company and allows sutomers to track their parcel (the API is used for that).
+
+[See website code here](https://github.com/musevarg/Transportation-Management-System/tree/master/API-and-Admin-Panel/App/App/Website).
+
+Below is an example of a parcel being tracked:
+![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic4.png)
