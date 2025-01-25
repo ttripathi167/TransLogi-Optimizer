@@ -1,60 +1,69 @@
-This project won the first prize of [Napier University Group Project Awards](https://www.napier.ac.uk/about-us/our-schools/school-of-computing/student-stories/computershare-awards-2020).
+# Transport-Management-System Overview
 
-# Transportation Management System
+TMS is an application which deals with the Transportation Logistics of Order Delievery. Conceptually similar to Canada Post Web Application.
+TMS has 7 Operational Cities, 4 Truck carrier companies with which TMS Works. TMS does Route management, logistics and Invoicing. 
 
-This project is a full-suite for a delivery company. It includes:
+* [Video Demo](https://www.youtube.com/watch?v=9TIqV2i-tsY)
+* [Doxygen Documentation](https://github.com/sobo94/Transport-Management-System/files/7776452/TMS_Doxygen_html.zip)
 
- - Customers website: general information about the company and parcel tracking option
- - Admin Panel: allows an admin user to manage the entire database in a user-firendly environment and also provide business oriented applications (revenue and spendings overview, jobs and drivers assignments and management...)
- - Drivers App: android application that allows drivers to see the jobs and vehicle assigned to them, mark jobs as completed, request for a customer signature, upload receipts and parcel pictures to the server, etc.
- - API: the pivotal element that connects and makes the three above services work
 
-### 0. Web Server
+## Software Technologies Used: 
++ WPF Application (.Net Framework) written in C#. 
++ Database: MySQL  
++ Agile Tool: Azure DevOp Boards.  
++ Software Diagramming:  Lucid Chart.  
++ Wireframing: Adobe XD.
++ Misc: Unit Testing, Git, GitHub, DOxygen Documentation.
 
-The web server uses *Python FLASK*. The API, Admin Panel and Customer's Website are therefore flask applications.  
-The whole setup uses Blueprints to separate the three areas. A main app is initiated, and sub-apps (api, admin panel and customer websites) are inititated within the main App.  
-*Python* is used as server-side language.
+## Instructions to deploy:
++ Create a local instance of MySQL, Run the MySQL Script before deploying application.
++ Run the Executable.
 
-[See App.py setup and blueprints registration here](https://github.com/musevarg/Transportation-Management-System/blob/master/API-and-Admin-Panel/App/App/App.py).
 
-### 1. API
+# Functionality
+TMS requires 3 Employees/ User roles to operate. Support for 3 Different Roles Admin, Buyer and Planner. Application let's user pick their Job Role. They have to Authenticate with the Passwords assigned based on functionality. User can make 3 attempts to login with the correct credential else they get locked out. Use the following defaults to Log into specific roles.
 
-The API is written in *Python* and *SQL*.
+|      Role     |    Username   |  Password  |
+| :-----------: | :-----------: | :--------: |
+|      Admin    |     Admin     |    Admin   |
+|      Buyer    |     Buyer     |    Buyer   |
+|     Planner   |     Planner   |   Planner  |
 
-The API is used to fetch, update and remove content from the database. It returns JSON responses and handles GET, POST, PUT and DELETE methods.
 
-[See API code here](https://github.com/musevarg/Transportation-Management-System/blob/master/API-and-Admin-Panel/App/App/API/RestAPI.py).
+## Admin Functionality
+![Admin](https://user-images.githubusercontent.com/16788406/147396922-c8603081-7885-44ea-8340-b2390690ffc8.PNG)
 
-Below is a sample output for each request method:
-![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic1.png)
 
-### 2. Admin Panel
++ Access General Config
++ Review Log Files
++ Set Log File Directory
++ Update Rate Table 
++ Update Route Tables 
++ Update Carrier Tables
++ Create Data Backup
++ Set up Database Connection
 
-The admin panel allows an admin user to update the MySQL database. The admin can add, remove and amend records.
+## Buyer Functionality
+![Buyer](https://user-images.githubusercontent.com/16788406/147396924-c867f3a8-a485-44b8-8832-d381f080f306.PNG)
 
-It is developed using *HTML*, *CSS*, *JavaScript* and *jQuery* to perform API calls. It makes extensive use of bootstrap and the above API.
 
-It also contains a dashboard screen that allows for the admin to check the monthly revenue and the monthly fees (fuel, lunch, MOT).
++ Connects to an external server which hosts a DB containing Clients orders.
++ New Client entries get generates every 10 mins. 
++ Buyer picks clients to service, by bringing external table entries into TMS Database
++ Assigns a Carrier City (Origin of our trip) to the Order Table.
++ Buyer can update the Order Status to be sent to the Planner.
++ Buyer can also review all the Completed Orders.
++ Buyer can generate Invoices for completed orders and stores it as an invoice File 
 
-[See Admin Panel code here](https://github.com/musevarg/Transportation-Management-System/tree/master/API-and-Admin-Panel/App/App/AdminPanel).
+## Planner Functionality
+![Planner](https://user-images.githubusercontent.com/16788406/147396928-f31d0779-48bd-4f84-93e9-1caac6b6f2bb.PNG)
 
-![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic2.png)
 
-### 3. Android Application
+- Planner based on the Order status view's the Order Table entries assigned to him.
+- Planner selects an Order and based on the Route Information specified computes Order infomation.
+- Planner computes the Total time, Total distance, Carrier Fee's and Clients Payment amount and Revenue of TMS generated on that order.
+- Planner does a final review, Marks Order as Completed to be sent back to the buyer. 
+- Planner finally updates database.
 
-The API allows for users authentication and also provides content to the native application.
-It allows for delivery drivers to log in and see what vehicle has been assigned to them, how many jobs have been assigned to them and allows them to mark a job as completed. This updates the status of the job in the database and uploads a picture of the parcel and the customer's signature.
-It also permits for uploading receipts. This content can be retrieved in the admin panel.
-
-[See Android App code here](https://github.com/musevarg/Transportation-Management-System/tree/master/Drivers-Android-App/app/src/main).
-
-![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic3.png)
-
-### 4. Customers Website
-
-This simple website gives information about the company and allows sutomers to track their parcel (the API is used for that).
-
-[See website code here](https://github.com/musevarg/Transportation-Management-System/tree/master/API-and-Admin-Panel/App/App/Website).
-
-Below is an example of a parcel being tracked:
-![](https://raw.githubusercontent.com/musevarg/Transportation-Management-System/master/pic4.png)
+---
+> Software Quality Term Project. Team number is Group 02 and our creative team name is Group Two. Our Team consist's of Sohaib, Colby Taylor, Seaung Lee and Pariecheir.
